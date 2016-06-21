@@ -4,18 +4,17 @@
 \alias{MultiPhasePlot}
 \title{ Plot of the marginal posterior densities of several phases}
 \usage{
-MultiPhasePlot(file, position, level = 0.95, dec = '.', sep=',', comment.char='#',
-  title = "Phases marginal posterior densities", GridLength = 1024)
+MultiPhasePlot(data, position_beginning, position_end = position_beginning+1,
+level = 0.95,  title = "Phases marginal posterior densities")
 }
 \arguments{
-  \item{file}{name of the CSV file containing the output of the MCMC algorithm of all phases of interest}
-  \item{position}{numeric vector containing the position of the phases of interest in the CSV file}
+  \item{data}{dataframe containing the output of the MCMC algorithm }
+  \item{position_beginning}{numeric vector containing the column number
+  corresponding to the beginning of the phases}
+  \item{position_end}{numeric vector containing the column number corresponding to the end of the phases. By default, position_end = position_beginning + 1. 
+}
   \item{level}{probability corresponding to the level of confidence}
-  \item{dec}{the character used in the file for decimal points for the use of read.csv()}
-  \item{sep}{the field separator character for the use of read.csv()}
-  \item{comment.char}{a character vector of length one containing a single character or an empty string for the use of read.csv()}
   \item{title}{title of the graph}
-  \item{GridLength}{length of the grid used to estimate the density}
 }
 \description{
 Draws a plot with the marginal posterior densities of the beginning and the end of all phases. No temporal order between phases is required.
@@ -29,9 +28,18 @@ Draws a plot with the marginal posterior densities of the beginning and the end 
   Marie-Anne Vibet <Marie-Anne.Vibet@univ-nantes.fr>
 }
 \examples{
+  # Data extracted from ChronoModel software
   data(Phases)
-  write.csv(Phases, "data.csv")
-  MultiPhasePlot("data.csv", c(4,2),level = 0.95, title="Densities of phase 1 and phase 2")
+  
+  # List of the name of the phases 
+  names(Phases)
+  
+  # Stipulating position_end
+  MultiPhasePlot(Phases, c(4,2), c(5,3), title = "Succession of phase 1 and phase 2")
+  
+  # In this case, equivalent to 
+  MultiPhasePlot(Phases, c(4,2), title = "Succession of phase 1 and phase 2")
+
 }
 \keyword{ phase time range }
 \keyword{ marginal posterior density }

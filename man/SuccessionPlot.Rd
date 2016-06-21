@@ -29,6 +29,10 @@ Plot of the densities of two successive phases
 \description{
 Plot of the densities of two successive phases and several summary statistics statistics (mean, CI, HPDR)
 }
+\details{
+Transition and gap ranges are represented by two-coloured segments using the colors of the both phases in succession. 
+If the gap between the successive phases does not exist, a cross is drawn instead of a segment. 
+}
 \author{
   Anne Philippe <Anne.Philippe@univ-nantes.fr> and
 

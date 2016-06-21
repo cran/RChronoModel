@@ -4,8 +4,7 @@
 \alias{MarginalStatistics}
 \title{Marginal summary statistics}
 \usage{
-MarginalStatistics(a_chain, level = 0.95, max_decimal = 0,
-  title = "Summary statistics")
+MarginalStatistics(a_chain, level = 0.95, max_decimal = 0)
 }
 \arguments{
 \item{a_chain}{numeric vector containing the output of the MCMC algorithm for a one-parameter }
@@ -14,10 +13,9 @@ MarginalStatistics(a_chain, level = 0.95, max_decimal = 0,
 
 \item{max_decimal}{maximum number of decimal}
 
-\item{title}{title of the summary statistics}
 }
 \value{
-A list of values corresponding to the following summary statistics
+A matrix of values corresponding to the following summary statistics
   \item{title }{The title of the summary statistics}
   \item{mean }{The mean of the MCMC chain. Use of "mean" function.}
   \item{map }{The maximum a posteriori of the MCMC chain. Use of "hdr" function.}
@@ -46,7 +44,7 @@ Hyndman, R.J. (1996) Computing and graphing highest density regions. American St
   data(Events); attach(Events)
   
   MarginalStatistics(Event.1)
-  MarginalStatistics(Event.2, level = 0.90, title = "Summary statistics according to 'Event 2")
+  MarginalStatistics(Event.2, level = 0.90)
   
 }
 

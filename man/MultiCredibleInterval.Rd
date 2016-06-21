@@ -4,16 +4,12 @@
 \alias{MultiCredibleInterval}
 \title{Bayesian credible intervals for a series of MCMC chains}
 \usage{
-MultiCredibleInterval(file, position, level = 0.95,
-dec = '.', sep=',', comment.char='#')
+MultiCredibleInterval(data, position, level = 0.95)
 }
 \arguments{
-  \item{file}{name of the CSV file containing the output of the MCMC algorithm of all phases of interest}
-  \item{position}{numeric vector containing the position of the column containin the MCMC chains in the CSV file}
-  \item{level}{probability corresponding to the level of confidence used for the credible interval}
-  \item{dec}{the character used in the file for decimal points for the use of read.csv()}
-  \item{sep}{the field separator character for the use of read.csv()}
-  \item{comment.char}{a character vector of length one containing a single character or an empty string for the use of read.csv()}
+  \item{data}{dataframe containing the output of the MCMC algorithm }
+  \item{position}{numeric vector containing the position of the column corresponding to the MCMC chains of interest}
+  \item{level}{probability corresponding to the level of confidence used to estimate the credible interval}
 }
 \value{
 Returns a matrix of values containing the level of confidence and the endpoints of the shortest credible interval for each variable of the MCMC chain. The name of the resulting rows are the positions of the corresponding columns in the CSV file.
@@ -27,7 +23,6 @@ Estimation of the shorest credible interval for each variables of simulated  Mar
 }
 \examples{
   data(Events)
-  write.csv(Events, "data.csv")
-  MultiCredibleInterval("data.csv", c(2,4, 3), 0.95)
+  MultiCredibleInterval(Events, c(2,4,3), 0.95)
 }
 \keyword{ credible interval}

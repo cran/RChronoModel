@@ -2,7 +2,29 @@
 
 #library(hdrcde)
 
+#####################################################
+#     Estimation of Credible interval        #
+#####################################################
 
+#' Importing a CSV file 
+#'
+#' Importing a CSV file containing the output of the MCMC algorithm from any software
+#'
+#' @details 
+#' @param file the name of the CSV file containing the output of the MCMC algorithm 
+#' @param dec the character used in the file for decimal points for the use of read.csv()
+#' @param sep the field separator character for the use of read.csv()
+#' @param comment.char a character vector of length one containing a single character or an empty string for the use of read.csv()
+#' @param header a character vector of length one containing a single character or an empty string for the use of read.csv()
+#' @return A data frame (data.frame) containing a representation of the data in the file.
+#' @export
+#'
+ImportCSV <- function(file, dec='.', sep=',', comment.char = '#', header = TRUE){
+  
+  # importing the CSV file
+  data = read.csv(file, dec = dec, sep=sep, comment.char = comment.char, header=header)
+  
+}
 
 #####################################################
 #     Anteriority / posteriority Probability        #
@@ -69,7 +91,7 @@ CredibleInterval <- function(a_chain, level=0.95){
 #' @param title title of the summary statistics
 #' @return A list of values corresponding to all the following statistics
 #' @export
-MarginalStatistics <- function(a_chain, level=0.95, max_decimal=0, title = 'Summary statistics'){
+MarginalStatistics <- function(a_chain, level=0.95, max_decimal=0){
 
   # Position
   mean = round(mean(a_chain), max_decimal)
@@ -82,9 +104,12 @@ MarginalStatistics <- function(a_chain, level=0.95, max_decimal=0, title = 'Summ
   CI = c(round(CredibleInterval(a_chain, level)[2], max_decimal), round(CredibleInterval(a_chain, level)[3], max_decimal))           # Credible Interval using the function 'CredibleInterval' from the package 'Rchronomodel'
   HPDR = round(hdr$hdr, max_decimal)              # Highest posterior density function region using the function 'hdr' from the package 'hdrcde'
 
-  # Resulted List
-  list(title, mean=mean, map=map, sd=sd, quantiles = quantiles, CI=CI, HPDR=HPDR)
-
+  # Resulted
+  res = c(mean, map, sd, quantiles[1], quantiles[2], quantiles[3], level, CI[1], CI[2], HPDR[,1], HPDR[,2])
+  Mat = matrix(nrow=11,ncol=1)
+  Mat[,1] = res
+  rownames(Mat) = c("mean", "MAP", "sd", "Q1", "median", "Q2", "level", "CredibleInterval Inf", "CredibleInterval Sup", "HPDRInf", "HPRDSup")
+  return(Mat)
 }
 
 
@@ -210,24 +235,26 @@ PhaseTimeRange <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, max
 #' @param PhaseEnd_chain numeric vector containing the output of the MCMC algorithm for the end of the phase
 #' @param level probability corresponding to the level of confidence used for the credible interval and the highest density region
 #' @param max_decimal maximum number of decimal
-#' @return A list of values corresponding to all the summary statistics
+#' @return A matrix of values corresponding to all the summary statistics
 #' @export
 PhaseStatistics <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, max_decimal=0){
 
   #Statistics according to PhaseBeginning_chain
-  BeginningStat = MarginalStatistics(PhaseBeginning_chain, level, max_decimal, title = 'Summary statistics of the Beginning of the phase')
+  BeginningStat = MarginalStatistics(PhaseBeginning_chain, level, max_decimal)
 
   #Statistics according to PhaseEnd_chain parameter
-  EndStat = MarginalStatistics(PhaseEnd_chain, level, max_decimal, title = 'Summary statistics of the End of the phase')
+  EndStat = MarginalStatistics(PhaseEnd_chain, level, max_decimal)
 
   #Statistics according to the duration of the phase
-  DurationStat = MarginalStatistics(PhaseEnd_chain-PhaseBeginning_chain, level, max_decimal, title = 'Summary statistics of the Duration of the phase')
+  DurationStat = MarginalStatistics(PhaseEnd_chain-PhaseBeginning_chain, level, max_decimal)
 
   #Statistics according to the duration of the phase
-  PTR = PhaseTimeRange(PhaseBeginning_chain, PhaseEnd_chain, level, max_decimal)
+  #PTR = PhaseTimeRange(PhaseBeginning_chain, PhaseEnd_chain, level, max_decimal)
 
   # Resulted List
-  list(BeginningStat, EndStat, DurationStat, PTR)
+  Mat = cbind(BeginningStat, EndStat, DurationStat) #, PTR)
+  colnames(Mat) = c("Beginning", "End", "Duration")
+  return(Mat)
 
 }
 
@@ -239,7 +266,7 @@ PhaseStatistics <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, ma
 
 #' Phase marginal density plot
 #'
-#' Plot of the density of Beginning and the End ofg a phase and summary statistics (mean, CI)
+#' Plot of the density of Beginning and the End of a phase and summary statistics (mean, CI)
 #'
 #' @param PhaseBeginning_chain numeric vector containing the output of the MCMC algorithm for the beginning of the phase
 #' @param PhaseEnd_chain numeric vector containing the output of the MCMC algorithm for the end of the phase
@@ -249,12 +276,13 @@ PhaseStatistics <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, ma
 #' @param GridLength length of the grid used to estimate the density
 #' @return A plot with the density of PhaseBeginning_chain + PhaseEnd_chain + additionnal summary statitsics
 #' @export
+
 PhasePlot <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, title = "Phase marginal posterior densities", colors = T, GridLength=1024){
 
   if(length(PhaseEnd_chain) != length(PhaseBeginning_chain)) { print('Error : the parameters do not have the same length')}   # test the length of both chains
   else{
 
-  if( sum(ifelse(PhaseBeginning_chain < PhaseEnd_chain, 1, 0)) == length(PhaseBeginning_chain) ) {
+  if( sum(ifelse(PhaseBeginning_chain <= PhaseEnd_chain, 1, 0)) == length(PhaseBeginning_chain) ) {
 
     minValuex <- min(density(PhaseBeginning_chain, n=GridLength)$x)
     maxValuex <- max(density(PhaseEnd_chain, n=GridLength)$x)
@@ -280,12 +308,12 @@ PhasePlot <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, title = 
 
     # segment representing the CredibleInterval of the end of the phase
     CIEnd = CredibleInterval(PhaseEnd_chain, level)
-    segments(CIEnd[2], step, CIEnd[3], step, lty = 1, lwd=6, col = "steelblue4")
+    segments(CIEnd[2], 0, CIEnd[3], 0, lty = 1, lwd=6, col = "steelblue4")
     # point in red representing the mean
-    points(mean(PhaseEnd_chain), step, lwd=6, col = "steelblue4")
+    points(mean(PhaseEnd_chain), 0, lwd=6, col = "steelblue4")
     # segment representing the Time range of the phase in green
     PTR = PhaseTimeRange(PhaseBeginning_chain, PhaseEnd_chain, level)
-    segments(PTR[2], maxValuey+step, PTR[3], maxValuey+step, lwd=10, col = "steelblue")
+    segments(PTR[2], maxValuey+step, PTR[3], maxValuey+step, lwd=6, col = "violetred4")
 
     # segment representing the CredibleInterval in blue
     CIBeginning = CredibleInterval(PhaseBeginning_chain, level)
@@ -294,7 +322,7 @@ PhasePlot <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, title = 
     points(mean(PhaseBeginning_chain), step , lwd=6, col = "steelblue1")
 
     # legend
-    legend(P3Valuex, maxValuey, c("Density of the Beginning", "Density of the End", "with Credible Interval" ," and Mean (o)", "Phase Time Range"), lty=c(1,1,0,0,1), bty="n",col = c("steelblue1","steelblue4","black","black","steelblue4"), lwd=c(2,2,6,6,10), x.intersp=0.5, cex=0.9)
+    legend(P3Valuex, maxValuey, c("Density of the Beginning", "Density of the End", "with Credible Interval" ," and Mean (o)", " Phase Time Range"), lty=c(1,1,0,0,1), bty="n",col = c("steelblue1","steelblue4","black","black","violetred4"), lwd=c(2,2,6,6,6), x.intersp=0.5, cex=0.9)
 
     } else {
 
@@ -315,7 +343,7 @@ PhasePlot <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, title = 
       points(mean(PhaseEnd_chain), 0, lwd=6, col = 1)
       # segment representing the Time range of the phase in green
       PTR = PhaseTimeRange(PhaseBeginning_chain, PhaseEnd_chain, level)
-      segments(PTR[2], maxValuey+step, PTR[3], maxValuey+step, lwd=10, col = 1)
+      segments(PTR[2], maxValuey+step, PTR[3], maxValuey+step, lwd=6, col = 1)
 
       # segment representing the CredibleInterval in blue
       CIBeginning = CredibleInterval(PhaseBeginning_chain, level)
@@ -324,16 +352,9 @@ PhasePlot <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, title = 
       points(mean(PhaseBeginning_chain), step , lwd=6, col = 1)
 
       # legend
-      legend(P3Valuex, maxValuey, c("Density of the Beginning", "Density of the End", "with Credible Interval", "and Mean (o)", "Phase Time Range"), lty=c(3,2,0,0,1), bty="n",col = c(1,1,1,1,1), lwd=c(2,2,6,6,10), x.intersp=0.5, cex=0.9)
+      legend(P3Valuex, maxValuey, c("Density of the Beginning", "Density of the End", "with Credible Interval", "and Mean (o)", " Phase Time Range"), lty=c(3,2,0,0,1), bty="n",col = c(1,1,1,1,1), lwd=c(2,2,6,6,6), x.intersp=0.5, cex=0.9)
 
     }
-
-    # second graph
-    readline(prompt = "Press a key to see the following graph")
-
-    par(las=1, mfrow=c(1,1), cex.axis=0.8)
-    MarginalPlot(PhaseEnd_chain -PhaseBeginning_chain, level, "Duration of the phase", colors = colors, GridLength=GridLength)
-
 
   } else {
     print('Error : PhaseBeginning_chain should be older than PhaseEnd_chain')
@@ -343,6 +364,41 @@ PhasePlot <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, title = 
 
 }
 
+
+#####################################################
+#     Phase duration marginal density plot          #
+#####################################################
+
+#' Phase duration marginal density plot 
+#'
+#' Plot of the density of the duration of a phase and summary statistics (mean, CI)
+#'
+#' @param PhaseBeginning_chain numeric vector containing the output of the MCMC algorithm for the beginning of the phase
+#' @param PhaseEnd_chain numeric vector containing the output of the MCMC algorithm for the end of the phase
+#' @param level probability corresponding to the level of confidence used for the credible interval and the time range
+#' @param title The Title of the graph
+#' @param colors if TRUE  -> use of colors in the graph
+#' @param GridLength length of the grid used to estimate the density
+#' @return A plot with the density of the duration of the phase + additionnal summary statitsics
+#' @export
+PhaseDurationPlot <- function(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, title = "Duration of the phase", colors = T, GridLength=1024){
+  
+  if(length(PhaseEnd_chain) != length(PhaseBeginning_chain)) { print('Error : the parameters do not have the same length')}   # test the length of both chains
+  else{
+    
+    if( sum(ifelse(PhaseBeginning_chain < PhaseEnd_chain, 1, 0)) == length(PhaseBeginning_chain) ) {
+      
+      par(las=1, mfrow=c(1,1), cex.axis=0.8)
+      MarginalPlot(PhaseEnd_chain -PhaseBeginning_chain, level, title = title, colors = colors, GridLength=GridLength)
+      
+      
+    } else {
+      print('Error : PhaseBeginning_chain should be older than PhaseEnd_chain')
+    }
+    
+  } # end if(length(PhaseEnd_chain) != length(PhaseBeginning_chain))
+  
+}
 
 
 #####################################################
@@ -456,7 +512,7 @@ SuccessionPlot <- function(Phase1Beginning_chain, Phase1End_chain, Phase2Beginni
   if(length(Phase1End_chain) != length(Phase2Beginning_chain)) { print('Error : the parameters do not have the same length')} # test for the length of both chains
   else{
 
-  if( sum(ifelse(Phase1Beginning_chain < Phase1End_chain, 1, 0)) != length(Phase1Beginning_chain) ||  sum(ifelse(Phase2Beginning_chain < Phase2End_chain, 1, 0)) != length(Phase1Beginning_chain) || sum(ifelse( Phase1End_chain <= Phase2Beginning_chain, 1, 0)) != length(Phase1Beginning_chain) ) {
+  if( sum(ifelse(Phase1Beginning_chain <= Phase1End_chain, 1, 0)) != length(Phase1Beginning_chain) ||  sum(ifelse(Phase2Beginning_chain <= Phase2End_chain, 1, 0)) != length(Phase1Beginning_chain) || sum(ifelse( Phase1End_chain <= Phase2Beginning_chain, 1, 0)) != length(Phase1Beginning_chain) ) {
     # test for Beginning < End and Phase1 < Phase2
     print('Error : PhaseBeginning_chain should be older than PhaseEnd_chain')
   } else {
@@ -471,11 +527,11 @@ SuccessionPlot <- function(Phase1Beginning_chain, Phase1End_chain, Phase2Beginni
     middleValuey <- maxValuey /2
     minValuey <- min ( min(density(Phase1Beginning_chain, n=GridLength)$y) , min(density(Phase1End_chain, n=GridLength)$y), min(density(Phase2Beginning_chain, n=GridLength)$y) , min(density(Phase2End_chain, n=GridLength)$y))
 
-    haut = seq(minValuey,maxValuey,length.out=4)
+    haut = seq(minValuey,maxValuey,length.out=5)
     middleA <- maxValuey+ (haut[1] + haut[2]) / 2
 
-    plot(density(Phase1End_chain, n=GridLength), main = title, ylab="Density", xlab = "Date", ylim=c(0,maxValuey+maxValuey), xlim=c(minValuex, maxValuex), bty='n',lty =2, lwd=2, axes=F, col = "steelblue4")
-    lines(density(Phase1Beginning_chain, n=GridLength), lty =3, lwd=2, col = "steelblue1")
+    plot(density(Phase1End_chain, n=GridLength), main = title, ylab="Density", xlab = "Date", ylim=c(0,maxValuey+maxValuey), xlim=c(minValuex, maxValuex), bty='n',lty =1, lwd=2, axes=F, col = "steelblue")
+    lines(density(Phase1Beginning_chain, n=GridLength), lty =1, lwd=2, col = "steelblue")
 
     # abscissa axis
     axis(1, at=c(minValuex, P1Valuex, middleValuex, P3Valuex, maxValuex) , labels =c(floor( minValuex), floor( P1Valuex), floor( middleValuex), floor( P3Valuex), floor( maxValuex)))
@@ -483,31 +539,31 @@ SuccessionPlot <- function(Phase1Beginning_chain, Phase1End_chain, Phase2Beginni
     axis(2, at=c(0, middleValuey, maxValuey), labels =c(0, round(middleValuey, 3), round(maxValuey, 3)) )
 
     ## Phase2
-    lines(density(Phase2Beginning_chain, n=GridLength), lty =3, lwd=2, col ="violetred1")
-    lines(density(Phase2End_chain, n=GridLength), lty =2, lwd=2, col ="violetred4")
+    lines(density(Phase2Beginning_chain, n=GridLength), lty =1, lwd=2, col ="violet")
+    lines(density(Phase2End_chain, n=GridLength), lty =1, lwd=2, col ="violet")
 
     ## Phase Time Range
     PTR1 = PhaseTimeRange(Phase1Beginning_chain, Phase1End_chain, level=level)
     PTR2 = PhaseTimeRange(Phase2Beginning_chain, Phase2End_chain, level=level)
-    segments(PTR1[2],maxValuey+haut[1],PTR1[3],maxValuey+haut[1],lwd=6,col="steelblue")
-    segments(PTR2[2],maxValuey+haut[2],PTR2[3],maxValuey+haut[2],lwd=6, col ="violet")
+    segments(PTR1[2],maxValuey+haut[2],PTR1[3],maxValuey+haut[2],lwd=6,col="steelblue")
+    segments(PTR2[2],maxValuey+haut[3],PTR2[3],maxValuey+haut[3],lwd=6, col ="violet")
     text(minValuex, middleA,"Time range",srt =90)
 
     ## Phase Transition
     PTrans = PhasesTransition(Phase1End_chain, Phase2Beginning_chain, level=level)
-    segments(PTrans[2],maxValuey+haut[3],PTrans[3],maxValuey+haut[3],lwd=6, col = "steelblue")
-    segments(PTrans[2],maxValuey+haut[3],PTrans[3],maxValuey+haut[3],lwd=6, col = "violet", lty=4)
+    segments(PTrans[2],maxValuey+haut[4],PTrans[3],maxValuey+haut[4],lwd=6, col = "steelblue")
+    segments(PTrans[2],maxValuey+haut[4],PTrans[3],maxValuey+haut[4],lwd=6, col = "violet", lty=4)
 
     PGap = PhasesGap(Phase1End_chain, Phase2Beginning_chain, level=level)
     if (PGap[2] == "NA" || PGap[3] == "NA") {
-      points( (PTrans[3]+PTrans[2])/2, maxValuey+haut[4], lwd=6, col = "steelblue")
+      points( (PTrans[3]+PTrans[2])/2, maxValuey+haut[5], lwd=2, col = "steelblue", pch=4)
     } else {
-      segments(PGap[2],maxValuey+haut[4],PGap[3],maxValuey+haut[4],lwd=6, col = "steelblue")
-      segments(PGap[2],maxValuey+haut[4],PGap[3],maxValuey+haut[4],lwd=6, col = "violet", lty=4)
+      segments(PGap[2],maxValuey+haut[5],PGap[3],maxValuey+haut[5],lwd=6, col = "steelblue")
+      segments(PGap[2],maxValuey+haut[5],PGap[3],maxValuey+haut[5],lwd=6, col = "violet", lty=4)
     }
 
-    text(minValuex, maxValuey+haut[3],"Transition",srt =90)
-    text(minValuex, maxValuey+haut[4],"Gap",srt =90)
+    text(minValuex, maxValuey+haut[4],"Transition",srt =90)
+    text(minValuex, maxValuey+haut[5],"Gap",srt =90)
 
   }
 
@@ -531,20 +587,13 @@ SuccessionPlot <- function(Phase1Beginning_chain, Phase1End_chain, Phase2Beginni
 #'
 #' @details A 100*level % credible interval is an interval that keeps N*(1-level) elements of the sample outside the interval
 #' The 100*level % credible interval is the shortest of all those intervals.
-#' @param file name of the CSV file containing the output of the MCMC algorithm of all pahses of interest
-#' @param position numeric vector containing the position of the column containin the MCMC chains in the CSV file
+#' @param data dataframe containing the output of the MCMC algorithm 
+#' @param position numeric vector containing the position of the column corresponding to the MCMC chains of interest
 #' @param level probability corresponding to the level of confidence used for the credible interval
-#' @param dec the character used in the file for decimal points for the use of read.csv()
-#' @param sep the field separator character for the use of read.csv()
-#' @param comment.char a character vector of length one containing a single character or an empty string for the use of read.csv()
 #' @return The endpoints of the shortest credible interval
 #' @export
 #'
-MultiCredibleInterval <- function(file, position, level=0.95, dec='.', sep=',', comment.char = '#'){
-
-  # importing the CSV file
-  data = as.matrix( read.csv(file, dec = dec, sep=sep, comment.char = comment.char, header=TRUE) )
-  data = data[,-1]
+MultiCredibleInterval <- function(data, position, level=0.95){
 
   # number of chains
   L = length(position)
@@ -552,8 +601,10 @@ MultiCredibleInterval <- function(file, position, level=0.95, dec='.', sep=',', 
   # matrix of results for each pair of phases
   result = matrix(nrow=L, ncol=3)
 
-  colnames(result)<- c("Level","CredibleIntervalInf", "CredibleIntervalSup")
-  rownames(result)<- position
+  colnames(result) <- c("Level","CredibleIntervalInf", "CredibleIntervalSup")
+  
+  # names
+  rownames(result) <- names(data)[position]
 
   for (i in 1:L) {
 
@@ -583,60 +634,52 @@ MultiCredibleInterval <- function(file, position, level=0.95, dec='.', sep=',', 
 #'
 #' Computes the shortest interval that satisfies : P(Phase1End < IntervalInf < IntervalSup < Phase2Beginning | M) = level
 #'
-#' @param file name of the CSV file containing the output of the MCMC algorithm of all pahses of interest
-#' @param position numeric vector containing the position of the beginning of the phases of interest in the CSV file
+#' @param data dataframe containing the output of the MCMC algorithm 
+#' @param position_beginning numeric vector containing the column number corresponding to the beginning of the phases
+#' @param position_end numeric vector containing the column number corresponding to the end of the phases set in the same order as in position_beginning
 #' @param level probability corresponding to the desired level of confidence
 #' @param max_decimal maximum number of decimal
-#' @param dec the character used in the file for decimal points for the use of read.csv()
-#' @param sep the field separator character for the use of read.csv()
-#' @param comment.char a character vector of length one containing a single character or an empty string for the use of read.csv()
-
 #' @return The endpoints of the shortest time range associated with the desired level
 #' @export
 
-MultiPhaseTimeRange <- function(file, position, level=0.95, max_decimal=0, dec='.', sep=',', comment.char = '#'){
 
-  # importing CSV file
-  data = as.matrix( read.csv(file, dec = dec, sep=sep, comment.char = comment.char, header=TRUE) )
-  data = data[,-1]
+MultiPhaseTimeRange <- function(data, position_beginning, position_end=position_beginning+1, level=0.95, max_decimal=0){
+  
+  if (length(position_beginning)!= length(position_end)) {
+    print('Error : the position vectors do not have the same length')
+    } else {
 
   # number of phases
-  L = length(position)
-
+  L = length(position_beginning)
+  
+  # names
+  names_beginning <- names(data)[position_beginning]
+  names_end <- names(data)[position_end]
+  
   # Construction of a new dataset containing the columns corresponding to the phases of interest
   phase = matrix(ncol = L*2, nrow=nrow(data))
   for (i in 1:L) {
-    phase[,2*i-1] = data[,position[i]]
-    phase[,2*i] = data[,position[i]+1]
+    phase[,2*i-1] = data[,position_beginning[i]]
+    phase[,2*i] = data[,position_end[i]]
   }
-
-  periode <- function(epsilon, PBeginning, PEnd, level){
-    q1 = quantile(PBeginning, probs = epsilon)    # Computes the 'level'th quantile of the beginning of the phase
-    indz = (PBeginning > q1)
-    q2 = quantile(PEnd[indz], probs= (level/(1-epsilon)))
-    c(q1,q2)
-  }   # end periode <- function(epsilon, PBeginning, PEnd, level){
-  per = Vectorize(periode,"epsilon")
-
-  epsilon = seq(0,1-level,.001)       # sequence of values used to compute
-
-  # Matrix of results for each pair of phases
+  
+  # matrix of results
   result = matrix(nrow=L, ncol=3)
   colnames(result)<- c("Level","TimeRangeInf", "TimeRangeSup")
-  rownames(result)<- position
-
-  for(i in 1:L) {
-    p=per(epsilon,phase[,2*i-1], phase[,2*i], level)
-    D<- p[2,]-p[1,]                   # computes the length of all intervals
-    I = which.min(D)                  # finds the shortest interval
-    range = as.numeric(round(p[,I], max_decimal))
-    result[i,] = c(level, range[1], range[2])
-  }#end  for(i in 1:L)
-
+  
+  phasenames <- vector(length = L)
+  for (i in 1:L) { phasenames[i] = paste(names_beginning[i], names_end[i] ) }
+  rownames(result)<- phasenames
+  
+  for (i in 1:L){
+    result[i,] = PhaseTimeRange(phase[,2*i-1], phase[,2*i], level=level, max_decimal=max_decimal)
+  }
+  
   return(result)
+  
+  
+  }
 }
-
-
 
 #####################################################
 #       Hiatus between a succession of  phases      #
@@ -646,74 +689,49 @@ MultiPhaseTimeRange <- function(file, position, level=0.95, max_decimal=0, dec='
 #'
 #' Finds if it exists a gap between two phases that is the longest interval that satisfies : P(Phase1End < IntervalInf < IntervalSup < Phase2Beginning | M) = level
 #'
-#' @param file name of the CSV file containing the output of the MCMC algorithm of all pahses of interest
-#' @param position numeric vector containing the position of the beginning of the phases of interest in the CSV file
+#' @param data dataframe containing the output of the MCMC algorithm 
+#' @param position_beginning numeric vector containing the column number corresponding to the beginning of the phases
+#' @param position_end numeric vector containing the column number corresponding to the end of the phases set in the same order as in position_beginning
 #' @param level probability corresponding to the level of confidence
 #' @param max_decimal maximum number of decimal
-#' @param dec the character used in the file for decimal points for the use of read.csv()
-#' @param sep the field separator character for the use of read.csv()
-#' @param comment.char a character vector of length one containing a single character or an empty string for the use of read.csv()
-
 #' @return The endpoints of the longest gap
 #' @export
 
-
-MultiPhasesGap <- function(file, position, level=0.95, max_decimal=0, dec='.', sep=',', comment.char = '#'){
-
-  # importing CSV file
-  data = as.matrix( read.csv(file, dec = dec, sep=sep, comment.char = comment.char, header=TRUE) )
-  data = data[,-1]
-
+MultiPhasesGap <- function(data, position_beginning, position_end = position_beginning+1, level=0.95, max_decimal=0){
+  
+  if (length(position_beginning)!= length(position_end)) {
+    print('Error : the position vectors do not have the same length')
+  } else {
+    
   # number of phases
-  L = length(position)
-
+  L = length(position_beginning)
+  
+  #names
+  names_beginning <- names(data)[position_beginning]
+  names_end <- names(data)[position_end]
+  
   # Construction of a new dataset containing the columns corresponding to the phases of interest
   phase = matrix(ncol = L*2, nrow=nrow(data))
   for (i in 1:L) {
-    phase[,2*i-1] = data[,position[i]]
-    phase[,2*i] = data[,position[i]+1]
+    phase[,2*i-1] = data[,position_beginning[i]]
+    phase[,2*i] = data[,position_end[i]]
   }
-
-  ## Calculates all possible hiatus for all pairs of phases
-
-  # Computation of all possible interval corresponding to the desired gap
-  interval <- function(epsilon, P1End, P2Beginning, level){
-    q1 = quantile(P1End ,probs = 1-epsilon) ;
-    indz = (P1End < q1)
-    q2 = quantile(P2Beginning[indz],probs= (1-level-epsilon)/(1-epsilon))
-    c(q1,q2)
-  }
-  hia = Vectorize(interval,"epsilon")
-  epsilon = seq(0,1-level,.001)
-
-  # Matrix of results for each pair of phases
+  
+  # matrix of results
   result = matrix(nrow=L-1, ncol=3)
   colnames(result)<- c("Level","HiatusIntervalInf", "HiatusIntervalSup")
-  rownames(result)<- position[-1]
-
-  for(i in 1:(L-1)) {
-    p = hia(epsilon, phase[,2*i], phase[,2*i+1], level)
-    D<- p[2,]-p[1,]
-    DD = D[D>0]
-
-    if (length(DD) > 0){
-      I = which(D==max(DD))
-      interval2 = round( p[,I], max_decimal)
-
-      if (p[2,I] != p[1,I]) {
-        result[i,] = c(level, interval2[1], interval2[2])
-      } else {
-        result[i,] = c(level, 'NA','NA')
-      }#end if (p[2,I] != p[1,I])
-
-    } else {
-      result[i,] = c(level=level, 'NA','NA')
-    }#end if (length(DD) > 0)
-
-  }#end  for(i in 1:L)
-
-
+  
+  phasenames <- vector(length = (L-1))
+  for (i in 1:L-1) { phasenames[i] = paste(names_end[i], "&", names_beginning[i+1]) }
+  rownames(result)<- phasenames
+  
+  for (i in 1:(L-1)){
+    result[i,] = PhasesGap(phase[,2*i], phase[,2*i+1], level=level, max_decimal=max_decimal)
+  }
+  
   return(result)
+  
+  }
 }
 
 
@@ -726,36 +744,42 @@ MultiPhasesGap <- function(file, position, level=0.95, max_decimal=0, dec='.', s
 #'
 #' Finds if it exists the shortest interval that satisfies : P(TransitionRangeInf < Phase1End < Phase2Beginning < TransitionRangeSup  | M) = level
 #'
-#' @param file name of the CSV file containing the output of the MCMC algorithm of all pahses of interest
-#' @param position numeric vector containing the position of the beginning of the phases of interest in the CSV file
+#' @param data dataframe containing the output of the MCMC algorithm 
+#' @param position_beginning numeric vector containing the column number corresponding to the beginning of the phases
+#' @param position_end numeric vector containing the column number corresponding to the end of the phases set in the same order as in position_beginning
 #' @param level probability corresponding to the level of confidence
 #' @param max_decimal maximum number of decimal
-#' @param dec the character used in the file for decimal points for the use of read.csv()
-#' @param sep the field separator character for the use of read.csv()
-#' @param comment.char a character vector of length one containing a single character or an empty string for the use of read.csv()
-
 #' @return the endpoints of the transition interval
 #' @export
 
 
-MultiPhasesTransition <- function(file, position, level=0.95, max_decimal=0, dec='.', sep=',', comment.char = '#'){
+MultiPhasesTransition <- function(data, position_beginning, position_end = position_beginning+1, level=0.95, max_decimal=0){
 
-  # importing the CSV file
-  data = as.matrix( read.csv(file, dec = dec, sep=sep, comment.char = comment.char, header=TRUE) )
-  data = data[,-1]
-
-  # construction of the new dataset
-  L = length(position)
+  if (length(position_beginning)!= length(position_end)) {
+    print('Error : the position vectors do not have the same length')
+  } else {
+    
+  # number of phases
+  L = length(position_beginning)
+  
+  #names
+  names_beginning <- names(data)[position_beginning]
+  names_end <- names(data)[position_end]
+  
+  # Construction of a new dataset containing the columns corresponding to the phases of interest
   phase = matrix(ncol = L*2, nrow=nrow(data))
   for (i in 1:L) {
-    phase[,2*i-1] = data[,position[i]]
-    phase[,2*i] = data[,position[i]+1]
+    phase[,2*i-1] = data[,position_beginning[i]]
+    phase[,2*i] = data[,position_end[i]]
   }
 
   # matrix of results
   result = matrix(nrow=L-1, ncol=3)
   colnames(result)<- c(level, "TransitionRangeInf", "TransitionRangeSup")
-  rownames(result)<- position[-1]
+  
+  phasenames <- vector(length = L-1)
+  for (i in 1:L-1) { phasenames[i] = paste(names_end[i], "&", names_beginning[i+1]) }
+  rownames(result)<- phasenames
 
   for (i in 1:(L-1)){
     result[i,] = PhaseTimeRange(phase[,2*i], phase[,2*i+1], level=level, max_decimal=max_decimal)
@@ -763,6 +787,7 @@ MultiPhasesTransition <- function(file, position, level=0.95, max_decimal=0, dec
 
   return(result)
 
+  }
 }
 
 
@@ -777,40 +802,38 @@ MultiPhasesTransition <- function(file, position, level=0.95, max_decimal=0, dec
 #'
 #' Plot of the densities of several successive phases + statistics (mean, CI, HPDR)
 #'
-#' @param file name of the CSV file containing the output of the MCMC algorithm of all pahses of interest
-#' @param position numeric vector containing the position of the phases of interest in the CSV file
+#' @param data dataframe containing the output of the MCMC algorithm 
+#' @param position_beginning numeric vector containing the column number corresponding to the beginning of the phases
+#' @param position_end numeric vector containing the column number corresponding to the end of the phases set in the same order as in position_beginning
 #' @param level probability corresponding to the level of confidence
-#' @param dec the character used in the file for decimal points for the use of read.csv()
-#' @param sep the field separator character for the use of read.csv()
-#' @param comment.char a character vector of length one containing a single character or an empty string for the use of read.csv()
 #' @param title title of the graph
-#' @param GridLength length of the grid used to estimate the density
 #' @return a plot of all densities + CI + mean + HDR
 #' @export
 
-MultiSuccessionPlot <- function(file, position, level=0.95, dec='.', sep=',', comment.char = '#',  title = "Phases marginal posterior densities", GridLength=1024){
+MultiSuccessionPlot <- function(data, position_beginning, position_end = position_beginning+1, level=0.95, title = "Phases marginal posterior densities"){
 
-  # importing the CSV file
-  data = as.matrix( read.csv(file, dec = dec, sep=sep, comment.char = comment.char, header=TRUE) )
-  data = data[,-1]
-
+  if (length(position_beginning)!= length(position_end)) {
+    print('Error : the position vectors do not have the same length')
+  } else {
+    
   # construction of the new dataset
-  L = length(position)
+  L = length(position_beginning)
+  
+  GridLength=1024
   phase = matrix(ncol = L*2, nrow=nrow(data))
   densityX = matrix(ncol = L*2, nrow=GridLength)
   densityY = matrix(ncol = L*2, nrow=GridLength)
 
   for (i in 1:L) {
-    phase[,2*i-1] = data[,position[i]]
-    phase[,2*i] = data[,position[i]+1]
-
-    densityX[,2*i-1] = density(data[,position[i]])$x
-    densityX[,2*i] = density(data[,position[i]+1])$x
-
-    densityY[,2*i-1] = density(data[,position[i]])$y
-    densityY[,2*i] = density(data[,position[i]+1])$y
+    phase[,2*i-1] = data[,position_beginning[i]]
+    phase[,2*i] = data[,position_end[i]]
+    
+    densityX[,2*i-1] = density(data[,position_beginning[i]])$x
+    densityX[,2*i] = density(data[,position_end[i]])$x
+    
+    densityY[,2*i-1] = density(data[,position_beginning[i]])$y
+    densityY[,2*i] = density(data[,position_end[i]])$y
   }
-
 
   minValuex <- min (apply(densityX,2,min))
   maxValuex <- max( apply(densityX,2,max) )
@@ -827,7 +850,7 @@ MultiSuccessionPlot <- function(file, position, level=0.95, dec='.', sep=',', co
   pal = rainbow(L)
   colors = pal[sample(x=1:L,L)]
 
-  plot(density(phase[,1], n=GridLength), main = title, ylab="Density", xlab = "Date", ylim=c(0,2*maxValuey), xlim=c(minValuex, maxValuex), bty='n',lty =2, lwd=2, axes=F, col = colors[1])
+  plot(density(phase[,1], n=GridLength), main = title, ylab="Density", xlab = "Date", ylim=c(0,2*maxValuey), xlim=c(minValuex, maxValuex), bty='n',lty =1, lwd=2, axes=F, col = colors[1])
   lines(density(phase[,2], n=GridLength), lty =1, lwd=2, col = colors[1])
 
   # abscissa axis
@@ -844,15 +867,14 @@ MultiSuccessionPlot <- function(file, position, level=0.95, dec='.', sep=',', co
 
   ## Phase Time Range
   a = haut[L]
-  MPTR = MultiPhaseTimeRange(file, position, level=level)
+  MPTR = MultiPhaseTimeRange(data=data, position_beginning=position_beginning, position_end=position_end, level=level)
   for (i in 1:L ) { segments(MPTR[i,2], maxValuey+haut[i+1],MPTR[i,3], maxValuey+haut[i+1],lwd=6,col=colors[i]) }
   text(minValuex, maxValuey+haut[2], "Time range",srt =90)
 
 
-
   ## Phase Transition
-  PTrans = MultiPhasesTransition(file, position, level=level)
-  PGap = MultiPhasesGap(file, position, level=level)
+  PTrans = MultiPhasesTransition(data=data, position_beginning=position_beginning, position_end=position_end, level=level)
+  PGap = MultiPhasesGap(data=data, position_beginning=position_beginning, position_end=position_end, level=level)
 
   for (i in 1:(L-1) ) {
     segments(PTrans[i,2], maxValuey+haut[L+2*i],PTrans[i,3], maxValuey+haut[L+2*i],lwd=6, col = colors[i])
@@ -860,17 +882,17 @@ MultiSuccessionPlot <- function(file, position, level=0.95, dec='.', sep=',', co
 
 
     if (PGap[i,2] == "NA" || PGap[i,3] == "NA") {
-      points( (PTrans[i,3]+PTrans[i,2])/2, maxValuey+haut[2*L-1 +i], lwd=6, col = colors[i])
+      points( (PTrans[i,3]+PTrans[i,2])/2, maxValuey+haut[2*L +i], lwd=2, col = colors[i], pch=4)
 
     } else {
-      points( PGap[i,2], maxValuey+haut[2*L +i], lwd=6, col = colors[i])
-      #segments(PGap[i,2], maxValuey+haut[2*L +i], PGap[i,3], maxValuey+haut[2*L+i], lwd=6, col = colors[i])
-      #segments(PGap[i,2], maxValuey+haut[2*L-1 +i+1], PGap[i,3], maxValuey+haut[2*L-1 +i+1], lwd=6, col = colors[i+1], lty=4)
+      segments(as.numeric(PGap[i,2]), maxValuey+haut[2*L +i], as.numeric(PGap[i,3]), maxValuey+haut[2*L+i], lwd=6, col = colors[i])
+      segments(as.numeric(PGap[i,2]), maxValuey+haut[2*L +i], as.numeric(PGap[i,3]), maxValuey+haut[2*L +i], lwd=6, col = colors[i+1], lty=4)
     }
 
   }
   text(minValuex, maxValuey+haut[2*L],"Transition / Gap",srt =90)
 
+  }
 }
 
 
@@ -884,40 +906,38 @@ MultiSuccessionPlot <- function(file, position, level=0.95, dec='.', sep=',', co
 #'
 #' Plot of the densities of several phases + statistics (mean, CI, HPDR)
 #'
-#' @param file name of the CSV file containing the output of the MCMC algorithm of all pahses of interest
-#' @param position numeric vector containing the position of the phases of interest in the CSV file
+#' @param data dataframe containing the output of the MCMC algorithm 
+#' @param position_beginning numeric vector containing the column number corresponding to the beginning of the phases
+#' @param position_end numeric vector containing the column number corresponding to the end of the phases set in the same order as in position_beginning
 #' @param level probability corresponding to the level of confidence
-#' @param dec the character used in the file for decimal points for the use of read.csv()
-#' @param sep the field separator character for the use of read.csv()
-#' @param comment.char a character vector of length one containing a single character or an empty string for the use of read.csv()
 #' @param title title of the graph
-#' @param GridLength length of the grid used to estimate the density
 #' @return a plot of all densities + CI + mean + HDR
 #' @export
 
-MultiPhasePlot <- function(file, position, level=0.95, dec='.', sep=',', comment.char = '#', title = "Phases marginal posterior densities", GridLength=1024){
+MultiPhasePlot <- function(data, position_beginning, position_end = position_beginning+1, level=0.95, title = "Phases marginal posterior densities"){
 
-  # importing the CSV file
-  data = as.matrix( read.csv(file, dec = dec, sep=sep, comment.char = comment.char, header=TRUE) )
-  data = data[,-1]
-
+  if (length(position_beginning)!= length(position_end)) {
+    print('Error : the position vectors do not have the same length')
+  } else {
+    
   # construction of the new dataset
-  L = length(position)
+  L = length(position_beginning) 
+  
   phase = matrix(ncol = L*2, nrow=nrow(data))
+  GridLength = 1024
   densityX = matrix(ncol = L*2, nrow=GridLength)
   densityY = matrix(ncol = L*2, nrow=GridLength)
 
   for (i in 1:L) {
-    phase[,2*i-1] = data[,position[i]]
-    phase[,2*i] = data[,position[i]+1]
-
-    densityX[,2*i-1] = density(data[,position[i]], n = GridLength)$x
-    densityX[,2*i] = density(data[,position[i]+1], n = GridLength)$x
-
-    densityY[,2*i-1] = density(data[,position[i]], n = GridLength)$y
-    densityY[,2*i] = density(data[,position[i]+1], n = GridLength)$y
+    phase[,2*i-1] = data[,position_beginning[i]]
+    phase[,2*i] = data[,position_end[i]]
+    
+    densityX[,2*i-1] = density(data[,position_beginning[i]])$x
+    densityX[,2*i] = density(data[,position_end[i]])$x
+    
+    densityY[,2*i-1] = density(data[,position_beginning[i]])$y
+    densityY[,2*i] = density(data[,position_end[i]])$y
   }
-
 
   minValuex <- min (apply(densityX,2,min))
   maxValuex <- max( apply(densityX,2,max) )
@@ -934,8 +954,8 @@ MultiPhasePlot <- function(file, position, level=0.95, dec='.', sep=',', comment
   pal = rainbow(L)
   colors = pal[sample(x=1:L,L)]
 
-  plot(density(phase[,1], n=GridLength), main = title, ylab="Density", xlab = "Date", ylim=c(0,maxValuey+middleValuey), xlim=c(minValuex, maxValuex), bty='n',lty =2, lwd=2, axes=F, col = colors[1])
-  lines(density(phase[,2], n=GridLength), lty =3, lwd=2, col = colors[1])
+  plot(density(phase[,1], n=GridLength), main = title, ylab="Density", xlab = "Date", ylim=c(0,maxValuey+middleValuey), xlim=c(minValuex, maxValuex), bty='n',lty =1, lwd=2, axes=F, col = colors[1])
+  lines(density(phase[,2], n=GridLength), lty =1, lwd=2, col = colors[1])
 
   # abscissa axis
   axis(1, at=c(minValuex, P1Valuex, middleValuex, P3Valuex, maxValuex) , labels =c(floor( minValuex), floor( P1Valuex), floor( middleValuex), floor( P3Valuex), floor( maxValuex)))
@@ -945,22 +965,15 @@ MultiPhasePlot <- function(file, position, level=0.95, dec='.', sep=',', comment
 
   ## Following phases
   for(i in 2:L) {
-    lines(density(phase[,2*i-1]), col=colors[i], lwd=2, lty=2)
-    lines(density(phase[,2*i]), col=colors[i], lwd=2, lty=3)
+    lines(density(phase[,2*i-1], n = GridLength), col=colors[i], lwd=2, lty=1)
+    lines(density(phase[,2*i], n = GridLength), col=colors[i], lwd=2, lty=1)
   }
 
   ## Phase Time Range
-  MPTR = MultiPhaseTimeRange(file, position, level=level, dec = dec, sep=sep, comment.char = comment.char)
+  MPTR = MultiPhaseTimeRange(data=data, position_beginning=position_beginning, position_end=position_end, level=level)
   for (i in 1:L ) { segments(MPTR[i,2], maxValuey+haut[i+1],MPTR[i,3], maxValuey+haut[i+1],lwd=6,col=colors[i]) }
   text(minValuex, maxValuey+haut[2], "Time range",srt =90)
 
+  }
 }
-
-
-
-
-
-
-
-
 

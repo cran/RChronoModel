@@ -4,17 +4,16 @@
 \alias{MultiPhasesTransition}
 \title{Transition range for a succession of phases (for phases in temporal order constraint)}
 \usage{
-MultiPhasesTransition(file, position, level = 0.95, max_decimal = 0,
-dec = '.', sep=',', comment.char='#')
+MultiPhasesTransition(data, position_beginning, position_end = position_beginning+1, 
+level = 0.95, max_decimal = 0)
 }
 \arguments{
-  \item{file}{name of the CSV file containing the output of the MCMC algorithm of all pahses of interest}
-  \item{position}{numeric vector containing the position of the beginning of the phases of interest in the CSV file}
+  \item{data}{dataframe containing the output of the MCMC algorithm }
+  \item{position_beginning}{numeric vector containing the column number corresponding to the beginning of the phases}
+  \item{position_end}{numeric vector containing the column number corresponding to the end of the phases. By default, position_end = position_beginning + 1. 
+}
   \item{level}{probability corresponding to the level of confidence}
   \item{max_decimal}{maximum number of decimal}
-  \item{dec}{the character used in the file for decimal points for the use of read.csv()}
-  \item{sep}{the field separator character for the use of read.csv()}
-  \item{comment.char}{a character vector of length one containing a single character or an empty string for the use of read.csv()}
 }
 \value{
 Returns a matrix of values containing the level of confidence and the endpoints of the transition interval for each pair of successive phases
@@ -22,15 +21,28 @@ Returns a matrix of values containing the level of confidence and the endpoints 
 \description{
 Finds if it exists the shortest interval [TransitionRangeInf, TransitionRangeSup] that satisfies : P(TransitionRangeInf < Phase1End < Phase2Beginning < TransitionRangeSup  | M) = level
 }
+\details{
+For each i, MultiPhasesTransition computes the transition interval for the phase defined by its beginning position_beginning[i] and its end position_end[i]. 
+The default value of position_end corresponds to CSV files exported from ChronoModel software. 
+}
 \author{
   Anne Philippe <Anne.Philippe@univ-nantes.fr> and
 
   Marie-Anne Vibet <Marie-Anne.Vibet@univ-nantes.fr>
 }
 \examples{
+  # Data extracted from ChronoModel software
   data(Phases)
-  write.csv(Phases, "data.csv")
-  MultiPhasesGap("data.csv", c(4,2), 0.95, 0)
+  
+  # List of the name of the phases 
+  names(Phases)
+  
+  # Stipulating position_end
+  MultiPhasesTransition(Phases, c(4,2), c(5,3))
+  
+  # In this case, equivalent to 
+  MultiPhasesTransition(Phases, c(4,2))
+
 }
-\keyword{ transition between two phases  }
+\keyword{ transition between two phases }
 \keyword{ temporal order }
