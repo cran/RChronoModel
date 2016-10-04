@@ -2,7 +2,7 @@
 % Please edit documentation in R/prog.R
 \name{MultiCredibleInterval}
 \alias{MultiCredibleInterval}
-\title{Bayesian credible intervals for a series of MCMC chains}
+\title{Bayesian credible intervals for a series of dates}
 \usage{
 MultiCredibleInterval(data, position, level = 0.95)
 }

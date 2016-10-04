@@ -22,7 +22,7 @@ A matrix of values corresponding to the following summary statistics
   \item{sd }{The standard deviation of the MCMC chain. Use of "sd" function. }
   \item{Q1, median, Q3 }{The quantiles of the MCMC chain corresponding to 0.25, 0.50 and 0.75. Use of "quantile" function.}
   \item{CI }{The credible interval corresponding to the desired level. Use of "CredibleInterval" function.}
-  \item{HPDR }{The highest posterior density region at the desired level. Use of "hdr" function.}
+  \item{HPDR }{The highest posterior density regions corresponding to the desired level. Use of "hdr" function.}
 }
 \description{
 Gives a list of summary statistics resulting from the output of the MCMC algorithm for a one-parameter.
