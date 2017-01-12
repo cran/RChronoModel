@@ -4,18 +4,15 @@
 \alias{SuccessionPlot}
 \title{Density Plots of two successive phases (for phases in temporal order constraint)}
 \usage{
-SuccessionPlot(Phase1Beginning_chain, Phase1End_chain, Phase2Beginning_chain,
-  Phase2End_chain, level = 0.95,
-  title = "Phases marginal posterior densities", GridLength = 1024)
+SuccessionPlot(Phase1Min_chain, Phase1Max_chain, Phase2Min_chain,
+  Phase2Max_chain, level = 0.95,
+  title = "Characterisation of several phases", GridLength = 1024)
 }
 \arguments{
-\item{Phase1Beginning_chain}{numeric vector containing the output of the MCMC algorithm for the beginning of the oldest phase}
-
-\item{Phase1End_chain}{numeric vector containing the output of the MCMC algorithm for the end of the oldest phase}
-
-\item{Phase2Beginning_chain}{numeric vector containing the output of the MCMC algorithm for the beginning of the following phase}
-
-\item{Phase2End_chain}{numeric vector containing the output of the MCMC algorithm for the end of the following phase}
+\item{Phase1Min_chain}{numeric vector containing the output of the MCMC algorithm for the minimum of the dates included in the oldest phase}
+\item{Phase1Max_chain}{numeric vector containing the output of the MCMC algorithm for the maximum of the dates included in the oldest phase} 
+\item{Phase2Min_chain}{numeric vector containing the output of the MCMC algorithm for the minimum of the dates included in the youngest phase}
+\item{Phase2Max_chain}{numeric vector containing the output of the MCMC algorithm for the maximum of the dates included in the youngest phase} 
 
 \item{level}{probability corresponding to the level of confidence}
 
@@ -24,14 +21,13 @@ SuccessionPlot(Phase1Beginning_chain, Phase1End_chain, Phase2Beginning_chain,
 \item{GridLength}{length of the grid used to estimate the density}
 }
 \value{
-Plot of the densities of two successive phases
+Plot of the densities of the minimum and the maximum of the dates included in each phase
 }
 \description{
-Plot of the densities of two successive phases and several summary statistics statistics (mean, CI, HPDR)
+Plot of the densities of the minimum and the maximum of the dates included in each phase and adds several summary statistics (mean, CI, HPDR)
 }
 \details{
-Transition and gap ranges are represented by two-coloured segments using the colors of the both phases in succession. 
-If the gap between the successive phases does not exist, a cross is drawn instead of a segment. 
+Curves represent the density of the minimum (oldest dates) and the maximum (youngest dates) of the dates included in each phase. Curves of the same color refer to the same phase. Time range intervals are symbolised by segments above the curves drawn using the same color as the one of the curves of the associated phase. Transition and gap range intervals are represented by two-coloured segments using the colors of the both phases in succession. If the gap between the successive phases does not exist, a cross is drawn instead of a segment. 
 }
 \author{
   Anne Philippe <Anne.Philippe@univ-nantes.fr> and
@@ -47,3 +43,4 @@ If the gap between the successive phases does not exist, a cross is drawn instea
 \keyword{ phase time range}
 \keyword{ temporal order}
 \keyword{ marginal posterior density }
+\keyword{ succession of phases }

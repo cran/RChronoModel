@@ -2,12 +2,12 @@
 \alias{PhaseDurationPlot}
 \title{Plot of the marginal posterior densities of the duration of a phase}
 \usage{
-PhaseDurationPlot(PhaseBeginning_chain, PhaseEnd_chain, level=0.95, 
+PhaseDurationPlot(PhaseMin_chain, PhaseMax_chain, level=0.95, 
 title = "Duration of the phase", colors = T, GridLength=1024)
 }
 \arguments{
-  \item{PhaseBeginning_chain}{numeric vector containing the output of the MCMC algorithm for the beginning of the phase}
-  \item{PhaseEnd_chain}{numeric vector containing the output of the MCMC algorithm for the end of the phase}
+  \item{PhaseMin_chain}{numeric vector containing the output of the MCMC algorithm for the minimum of the dates included in the phase}
+  \item{PhaseMax_chain}{numeric vector containing the output of the MCMC algorithm for the maximum of the dates included in the phase}
   \item{level}{probability corresponding to the level of confidence used for the credible interval and the time range}
   \item{title}{title of the graph}
   \item{colors}{if TRUE  -> use of colors in the graph}
@@ -17,7 +17,7 @@ title = "Duration of the phase", colors = T, GridLength=1024)
 A plot with the marginal posterior densities of the duration of a phase and adds several summary statistics (mean, Credible interval, Time range)
 }
 \description{
-This function draws the marginal posterior densities of the duration of a phase
+This function draws the marginal posterior densities of the time elapsed between the minimum and the maximum of the dates included in a phase, and adds summary statistics (mean, CI)
 }
 \author{
   Anne Philippe <Anne.Philippe@univ-nantes.fr> and
@@ -35,4 +35,4 @@ This function draws the marginal posterior densities of the duration of a phase
 \keyword{ credible interval }
 \keyword{ mean }
 \keyword{ marginal posterior density }
-
+\keyword{ individual phase}

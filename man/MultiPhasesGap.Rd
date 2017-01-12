@@ -4,13 +4,13 @@
 \alias{MultiPhasesGap}
 \title{Gap/Hiatus between a succession of phases (for phases in temporal order constraint)}
 \usage{
-MultiPhasesGap(data, position_beginning, position_end = position_beginning+1,
+MultiPhasesGap(data, position_minimum, position_maximum = position_minimum+1,
  level = 0.95, max_decimal = 0)
 }
 \arguments{
   \item{data}{dataframe containing the output of the MCMC algorithm }
-  \item{position_beginning}{numeric vector containing the column number corresponding to the beginning of the phases}
-  \item{position_end}{numeric vector containing the column number corresponding to the end of the phases. By default, position_end = position_beginning + 1. 
+  \item{position_minimum}{numeric vector containing the column number corresponding to the minimum of the dates included in each phase}
+  \item{position_maximum}{numeric vector containing the column number corresponding to the maximum of the dates included in each phase. By default, position_maximum = position_minimum + 1. 
 }
   \item{level}{probability corresponding to the level of confidence}
   \item{max_decimal}{maximum number of decimal}
@@ -19,11 +19,11 @@ MultiPhasesGap(data, position_beginning, position_end = position_beginning+1,
 Returns a matrix of values containing the level of confidence and the endpoints of the gap for each pair of successive phases
 }
 \description{
-This function finds, if it exists, the gap between two successive phases. This gap or hiatus is the longest interval [IntervalInf, IntervalSup] that satisfies : P(Phase1End < IntervalInf < IntervalSup < Phase2Beginning | M) = level.
+This function finds, if it exists, the gap between two successive phases. This gap or hiatus is the longest interval [IntervalInf, IntervalSup] that satisfies : P(Phase1Max < IntervalInf < IntervalSup < Phase2Min | M) = level for each successive phase.
 }
 \details{
-For each i, MultiPhasesGap computes the gap interval for the phase defined by its beginning position_beginning[i] and its end position_end[i]. 
-The default value of position_end corresponds to CSV files exported from ChronoModel software. 
+For each i, MultiPhasesGap computes the gap interval for the phase defined by its minimum position_minimum[i] and its maximum position_maximum[i]. 
+The default value of position_maximum corresponds to CSV files exported from ChronoModel software. 
 }
 \author{
   Anne Philippe <Anne.Philippe@univ-nantes.fr> and
@@ -37,7 +37,7 @@ The default value of position_end corresponds to CSV files exported from ChronoM
   # List of the name of the phases 
   names(Phases)
   
-  # Stipulating position_end
+  # Stipulating position_maximum
   MultiPhasesGap(Phases, c(4,2), c(5,3))
   
   # In this case, equivalent to 
@@ -46,3 +46,4 @@ The default value of position_end corresponds to CSV files exported from ChronoM
 \keyword{ bayesian statistics }
 \keyword{ gap between two phases}
 \keyword{ temporal order }
+\keyword{ succession of phases }

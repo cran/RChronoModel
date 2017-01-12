@@ -4,13 +4,13 @@
 \alias{MultiSuccessionPlot}
 \title{Successive Phases Density Plots (for phases in temporal order constraint)}
 \usage{
-MultiSuccessionPlot(data, position_beginning, position_end = position_beginning+1,
- level = 0.95, title = "Phases marginal posterior densities")
+MultiSuccessionPlot(data, position_minimum, position_maximum = position_minimum+1,
+ level = 0.95, title = "Characterisation of a succession of phases")
 }
 \arguments{
   \item{data}{dataframe containing the output of the MCMC algorithm }
-  \item{position_beginning}{numeric vector containing the column number corresponding to the beginning of the phases}
-  \item{position_end}{numeric vector containing the column number corresponding to the end of the phases. By default, position_end = position_beginning + 1. 
+  \item{position_minimum}{numeric vector containing the column number corresponding to the minimum of the dates included in each phase}
+  \item{position_maximum}{numeric vector containing the column number corresponding to the maximum of the dates included in each phase. By default, position_maximum = position_minimum + 1. 
 }
   \item{level}{probability corresponding to the level of confidence}
   \item{title}{title of the graph}
@@ -22,10 +22,7 @@ Returns a plot of all densities and adds several summary statistics
 This functions draws a plot of the densities of several successive phases and adds several statistics (mean, CI, HPDR)
 }
 \details{
-For each i, PhaseTimeRange computes the time range interval for the phase defined by its beginning position_beginning[i] and its end position_end[i]. 
-The default value of position_end corresponds to CSV files exported from ChronoModel software. 
-Transition ranges and gap ranges are represented by two-coloured segments using the colors of the both phases in succession. 
-If the gap between two successive phases does not exist, a cross is drawn instead of a segment. 
+Curves represent the density of the minimum (oldest dates) and the maximum (youngest dates) of the dates included in each phase. Curves of the same color refer to the same phase. When there is only one curve of one color, it means that there is only one event in the corresponding phase and then the minimum equals the maximum. Time range intervals are symbolised by segments above the curves drawn using the same color as the one of the curves of the associated phase. Transition and gap range intervals are represented by two-coloured segments using the colors of successive phases. If the gap between the successive phases does not exist, a cross is drawn instead of a segment. 
 }
 \author{
   Anne Philippe <Anne.Philippe@univ-nantes.fr> and
@@ -50,3 +47,4 @@ If the gap between two successive phases does not exist, a cross is drawn instea
 \keyword{ transition between two phases }
 \keyword{ phase time range }
 \keyword{ temporal order }
+\keyword{ succession of phases }

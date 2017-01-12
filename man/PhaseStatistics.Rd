@@ -4,29 +4,29 @@
 \alias{PhaseStatistics}
 \title{Summary statistics for a phase}
 \usage{
-PhaseStatistics(PhaseBeginning_chain, PhaseEnd_chain, level = 0.95,
+PhaseStatistics(PhaseMin_chain, PhaseMax_chain, level = 0.95,
   max_decimal = 0)
 }
 \arguments{
-\item{PhaseBeginning_chain}{numeric vector containing the output of the MCMC algorithm for the beginning of the phase}
-\item{PhaseEnd_chain}{numeric vector containing the output of the MCMC algorithm for the end of the phase}
+\item{PhaseMin_chain}{numeric vector containing the output of the MCMC algorithm for the minimum of the dates included in the phase}
+\item{PhaseMax_chain}{numeric vector containing the output of the MCMC algorithm for the maximum of the dates included in the phase}
 \item{level}{probability corresponding to the level of confidence used for the credible interval and the highest density region}
 \item{max_decimal}{maximum number of decimal}
 }
 \value{
   Returns a list of values corresponding to the summary statistics:
-  \item{1}{Statistics of the beginning of the phase}
-  \item{2}{Statistics of the end of the phase}
-  \item{3}{Statistics of the duration of the phase}
+  \item{1}{Statistics of the minimum of the dates included in the phase}
+  \item{2}{Statistics of the maximum of the dates included in the phase}
+  \item{3}{Statistics of the duration of the dates included in the phase}
   \item{4}{The endpoints of the phase time range}
 
 }
 \description{
-Estimation of several summary statistics of the beginning, the end and the duration of a phase.
+Estimation of several summary statistics of the minimum, the maximum and the duration of the dates included in the phase.
 }
 \details{
 The summary statistics are those given by MarginalStatistics function. The time range is given by PhaseTimeRange function.
-The duration of the phase is computed as follow duration = end - beginning at each iteration of the MCMC output.
+The duration is computed as follow duration = maximum - minimum at each iteration of the MCMC output.
 }
 \author{
   Anne Philippe <Anne.Philippe@univ-nantes.fr> and
@@ -45,3 +45,4 @@ The duration of the phase is computed as follow duration = end - beginning at ea
 \keyword{ highest posterior density }
 \keyword{ phase time range }
 \keyword{ summary statistics}
+\keyword{ individual phase}

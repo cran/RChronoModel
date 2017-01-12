@@ -23,6 +23,7 @@ export(PhaseTimeRange)
 export(SuccessionPlot)
 export(TempoPlot)
 export(TempoActivityPlot)
+export(CreateMinMaxGroup)
 
 import(stats)
 import(utils)

@@ -4,12 +4,12 @@
 \alias{PhasesTransition}
 \title{Transition range between two successive phases (for phases in temporal order constraint)}
 \usage{
-PhasesTransition(Phase1End_chain, Phase2Beginning_chain, level = 0.95,
+PhasesTransition(Phase1Max_chain, Phase2Min_chain, level = 0.95,
   max_decimal = 0)
 }
 \arguments{
-  \item{Phase1End_chain}{numeric vector containing the output of the MCMC algorithm for the end of the oldest phase}
-  \item{Phase2Beginning_chain}{numeric vector containing the output of the MCMC algorithm for the beginning of the following phase}
+  \item{Phase1Max_chain}{numeric vector containing the output of the MCMC algorithm for the maximum of the dates included in the oldest phase}
+  \item{Phase2Min_chain}{numeric vector containing the output of the MCMC algorithm for the minimum of the dates included in the youngest phase}
   \item{level}{probability corresponding to the level of confidence}
   \item{max_decimal}{maximum number of decimal}
 }
@@ -17,7 +17,7 @@ PhasesTransition(Phase1End_chain, Phase2Beginning_chain, level = 0.95,
 Returns a vector of values containing the level of confidence and the endpoints of the transition interval between the successive phases
 }
 \description{
-Finds if it exists the shortest interval [TransitionRangeInf , TransitionRangeSup ] that satisfies : P(TransitionRangeInf < Phase1End < Phase2Beginning < TransitionRangeSup  | M) = level
+Finds if it exists the shortest interval [TransitionRangeInf , TransitionRangeSup ] that satisfies : P(TransitionRangeInf < Phase1Max_chain < Phase2Min_chain < TransitionRangeSup  | M) = level
 }
 
 \author{
@@ -32,3 +32,4 @@ Finds if it exists the shortest interval [TransitionRangeInf , TransitionRangeSu
 }
 \keyword{ transition between two phases}
 \keyword{ temporal order}
+\keyword{ succession of phases }

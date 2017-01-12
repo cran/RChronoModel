@@ -4,23 +4,23 @@
 \alias{PhaseTimeRange}
 \title{Phase Time Range}
 \usage{
-PhaseTimeRange(PhaseBeginning_chain, PhaseEnd_chain, level = 0.95,
+PhaseTimeRange(PhaseMin_chain, PhaseMax_chain, level = 0.95,
   max_decimal = 2)
 }
 \arguments{
-\item{PhaseBeginning_chain}{numeric vector containing the output of the MCMC algorithm for the beginning of the phase}
+\item{PhaseMin_chain}{numeric vector containing the output of the MCMC algorithm for the minimum of the dates included in the phase}
 
-\item{PhaseEnd_chain}{numeric vector containing the output of the MCMC algorithm for the end of the phase}
+\item{PhaseMax_chain}{numeric vector containing the output of the MCMC algorithm for the maximum of the dates included in the phase}
 
 \item{level}{probability corresponding to the desired level of confidence}
 
 \item{max_decimal}{maximum number of decimal}
 }
 \value{
-A vector of values containing the desired level of confidence and the endpoints of the shortest time range associated with this desired level
+A vector of values containing the desired level of confidence and the endpoints of the shortest time range associated with this desired level.
 }
 \description{
-Computes the shortest interval [IntervalInf ; IntervalSup ] that satisfies : P(Phase1End < IntervalInf < IntervalSup < Phase2Beginning | M) = level
+Computes the shortest interval [IntervalInf ; IntervalSup ] that satisfies : P(PhaseMin_chain =< IntervalInf < IntervalSup =< PhaseMax_chain | M) = level.
 }
 \examples{
 
@@ -30,4 +30,4 @@ Computes the shortest interval [IntervalInf ; IntervalSup ] that satisfies : P(P
 
 }
 \keyword{ phase time range}
-
+\keyword{ individual phase}
